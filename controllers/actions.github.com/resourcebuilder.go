@@ -18,8 +18,7 @@ const (
 	jitTokenKey = "jitToken"
 )
 
-type resourceBuilder struct {
-}
+type resourceBuilder struct{}
 
 func (b *resourceBuilder) newScaleSetListenerPod(autoscalingListener *v1alpha1.AutoscalingListener, serviceAccount *corev1.ServiceAccount, secret *corev1.Secret) *corev1.Pod {
 	newLabels := map[string]string{}
@@ -299,6 +298,7 @@ func (b *resourceBuilder) newAutoScalingListener(autoscalingRunnerSet *v1alpha1.
 			MaxRunners:                    effectiveMaxRunners,
 			Image:                         image,
 			ImagePullSecrets:              imagePullSecrets,
+			GitHubServerTLS:               autoscalingRunnerSet.Spec.GitHubServerTLS,
 		},
 	}
 
