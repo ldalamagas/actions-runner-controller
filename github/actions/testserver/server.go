@@ -1,24 +1,33 @@
-package actions_test
+package testserver
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/require"
 )
 
-// newActionsServer returns a new httptest.Server that handles the
+// New returns a new httptest.Server that handles the
 // authentication requests neeeded to create a new client. Any requests not
 // made to the /actions/runners/registration-token or
 // /actions/runner-registration endpoints will be handled by the provided
 // handler. The returned server is started and will be automatically closed
 // when the test ends.
-func newActionsServer(t *testing.T, handler http.Handler, options ...actionsServerOption) *actionsServer {
-	s := httptest.NewServer(nil)
+//
+// TODO: this uses ginkgo interface _only_ to support our current controller tests
+func New(t ginkgo.GinkgoTInterface, handler http.Handler, options ...actionsServerOption) *actionsServer {
+	s := NewUnstarted(t, handler, options...)
+	s.Start()
+	return s
+}
+
+// TODO: this uses ginkgo interface _only_ to support our current controller tests
+func NewUnstarted(t ginkgo.GinkgoTInterface, handler http.Handler, options ...actionsServerOption) *actionsServer {
+	s := httptest.NewUnstartedServer(handler)
 	server := &actionsServer{
 		Server: s,
 	}
@@ -41,7 +50,7 @@ func newActionsServer(t *testing.T, handler http.Handler, options ...actionsServ
 		// handle getActionsServiceAdminConnection
 		if strings.HasSuffix(r.URL.Path, "/actions/runner-registration") {
 			if server.token == "" {
-				server.token = defaultActionsToken(t)
+				server.token = DefaultActionsToken(t)
 			}
 
 			w.Write([]byte(`{"url":"` + s.URL + `/tenant/123/","token":"` + server.token + `"}`))
@@ -58,17 +67,23 @@ func newActionsServer(t *testing.T, handler http.Handler, options ...actionsServ
 
 type actionsServerOption func(*actionsServer)
 
+func WithActionsToken(token string) actionsServerOption {
+	return func(s *actionsServer) {
+		s.token = token
+	}
+}
+
 type actionsServer struct {
 	*httptest.Server
 
 	token string
 }
 
-func (s *actionsServer) configURLForOrg(org string) string {
+func (s *actionsServer) ConfigURLForOrg(org string) string {
 	return s.URL + "/" + org
 }
 
-func defaultActionsToken(t *testing.T) string {
+func DefaultActionsToken(t ginkgo.GinkgoTInterface) string {
 	claims := &jwt.RegisteredClaims{
 		IssuedAt:  jwt.NewNumericDate(time.Now().Add(-10 * time.Minute)),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
