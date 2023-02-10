@@ -187,6 +187,8 @@ func (c *Client) Identifier() string {
 	}
 
 	if c.rootCAs != nil {
+		// ignoring because this cert pool is intended not to come from SystemCertPool
+		// nolint:staticcheck
 		identifier += fmt.Sprintf("rootCAs:%q", c.rootCAs.Subjects())
 	}
 
