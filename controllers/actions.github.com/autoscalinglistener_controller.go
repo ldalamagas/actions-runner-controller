@@ -346,6 +346,35 @@ func (r *AutoscalingListenerReconciler) createServiceAccountForListener(ctx cont
 func (r *AutoscalingListenerReconciler) createListenerPod(ctx context.Context, autoscalingRunnerSet *v1alpha1.AutoscalingRunnerSet, autoscalingListener *v1alpha1.AutoscalingListener, serviceAccount *corev1.ServiceAccount, secret *corev1.Secret, logger logr.Logger) (ctrl.Result, error) {
 	newPod := r.resourceBuilder.newScaleSetListenerPod(autoscalingListener, serviceAccount, secret)
 
+	if autoscalingListener.Spec.GitHubServerTLS != nil {
+		var rootCAsConfigMap corev1.ConfigMap
+		err := r.Get(
+			ctx,
+			types.NamespacedName{
+				Namespace: autoscalingRunnerSet.Namespace,
+				Name:      autoscalingListener.Spec.GitHubServerTLS.RootCAsConfigMapRef,
+			},
+			&rootCAsConfigMap,
+		)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf(
+				"failed to get configmap %s: %w",
+				autoscalingListener.Spec.GitHubServerTLS.RootCAsConfigMapRef,
+				err,
+			)
+		}
+
+		var certString string
+		for _, cert := range rootCAsConfigMap.BinaryData {
+			certString += string(cert)
+		}
+
+		newPod.Spec.Containers[0].Env = append(newPod.Spec.Containers[0].Env, corev1.EnvVar{
+			Name:  "GITHUB_SERVER_ROOT_CA",
+			Value: certString,
+		})
+	}
+
 	if err := ctrl.SetControllerReference(autoscalingListener, newPod, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
