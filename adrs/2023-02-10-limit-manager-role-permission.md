@@ -29,7 +29,7 @@ This should have the lowest privilege (not any `RoleBinding` nor `ClusterRoleBin
 
 2. Service account for AutoScalingListener Pod
 
-This has a `RoleBinding` to a single namespace with a role that has permission to `PATCH` `EphemeralRunnerSet` and `EphemeralRunner`.
+This has a `RoleBinding` to a single namespace with a `Role` that has permission to `PATCH` `EphemeralRunnerSet` and `EphemeralRunner`.
 
 3. Service account for the controller manager
 
@@ -68,7 +68,7 @@ To help these customers and improve security for `actions-runner-controller` in 
 
 > We will change the default cache-based client to bypass cache on reading `Secrets`, so we can eliminate the need for `List` and `Watch` `Secrets` permission in cluster scope.
 
-Introduce a new `Role` for the namespace that an `AutoScalingRunnerSet` deployed with the following permission
+Introduce a new `ClusterRole` for the namespace that each `AutoScalingRunnerSet` deployed with the following permission
 
 - Get/Create/Delete/Update/Patch on `Secrets`
 - Get/Create/Delete/Update/Patch on `Pods`
@@ -76,4 +76,4 @@ Introduce a new `Role` for the namespace that an `AutoScalingRunnerSet` deployed
 - Get/Create/Delete/Update/Patch on `RoleBindings`
 - Get/Create/Delete/Update/Patch on `ServiceAccounts`
 
-The `RoleBinding` for the new `Role` will happen during `helm install demo oci://ghcr.io/actions/actions-runner-controller-charts/auto-scaling-runner-set` to grant the controller's service account required permissions to operate in the namespace the `AutoScalingRunnerSet` deployed.
+The `RoleBinding` for the new `ClusterRole` will happen during `helm install demo oci://ghcr.io/actions/actions-runner-controller-charts/auto-scaling-runner-set` to grant the controller's service account required permissions to operate in the namespace the `AutoScalingRunnerSet` deployed.
