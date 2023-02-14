@@ -68,7 +68,7 @@ To help these customers and improve security for `actions-runner-controller` in 
 
 > We will change the default cache-based client to bypass cache on reading `Secrets`, so we can eliminate the need for `List` and `Watch` `Secrets` permission in cluster scope.
 
-Introduce a new `ClusterRole` for the namespace that each `AutoScalingRunnerSet` deployed with the following permission
+Introduce a new `ClusterRole` for the controller and `RoleBinding` for the namespace that each `AutoScalingRunnerSet` deployed with the following permission.
 
 - Get/Create/Delete/Update/Patch on `Secrets`
 - Get/Create/Delete/Update/Patch on `Pods`
