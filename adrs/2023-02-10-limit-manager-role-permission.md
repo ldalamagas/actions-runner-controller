@@ -77,3 +77,17 @@ Introduce a new `ClusterRole` for the controller and `RoleBinding` it to the nam
 - Get/Create/Delete/Update/Patch on `ServiceAccounts`
 
 The `RoleBinding` for the new `ClusterRole` will happen during `helm install demo oci://ghcr.io/actions/actions-runner-controller-charts/auto-scaling-runner-set` to grant the controller's service account required permissions to operate in the namespace the `AutoScalingRunnerSet` deployed.
+
+## Install ARC to only watch/react resources in a single namespace
+
+In case the user doesn't want to have any `ClusterRole`, they can choose to install the `actions-runner-controller` in a mode that only requires a `Role` with `RoleBinding` in a particular namespace.
+
+In this mode, the `actions-runner-controller` will only be able to watch `AutoScalingRunnerSet` resource in a single namespace.
+
+If you want to deploy multiple `AutoScalingRunnerSet` into different namespaces, you will need to install `actions-runner-controller` in this mode multiple times as well and have each installation watch the namespace you want to deploy an `AutoScalingRunnerSet`
+
+You will install `actions-runner-controller` with something like `helm install arc --set watchSingleNamespace=TestNamespace oci://ghcr.io/actions/actions-runner-controller-charts/actions-runner-controller-2` (the `TestNamespace` namespace needs to be created first).
+
+You will deploy the `AutoScalingRunnerSet` with something like `helm install demo --namespace TestNamespace oci://ghcr.io/actions/actions-runner-controller-charts/auto-scaling-runner-set`
+
+In this mode, you will end up with a manager `Role` that has all Get/List/Create/Delete/Update/Patch/Watch permissions on resources we need, and a `RoleBinding` to bind the `Role` with the controller `ServiceAccount` in the watched single namespace, ex: `TestNamespace` in the above example.
